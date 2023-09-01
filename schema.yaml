@@ -10,7 +10,7 @@ fields:
   - name: job
   # define tag fields
   tag:
-  - name: credit_store
+  - name: credit_score
   # define numeric fields
   numeric:
   - name: age
