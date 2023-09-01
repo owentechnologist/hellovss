@@ -30,10 +30,7 @@ redisvl>=0.0.3
 pip3 install -r requirements.txt
 ```
 
-python3 redisvl_1.py -h redis-10400.homelab.local -p 10400 -c y -t y
 5. Execute the redisvl_1.py code (or another example) from the project directory:
-
-
 
 #### You should probably run with all the available options enabled the first time you run the program
 
