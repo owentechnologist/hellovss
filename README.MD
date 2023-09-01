@@ -30,10 +30,7 @@ redisvl>=0.0.3
 pip3 install -r requirements.txt
 ```
 
-python3 redisvl_1.py -h redis-10400.homelab.local -p 10400 -c y -t y
 5. Execute the redisvl_1.py code (or another example) from the project directory:
-
-
 
 #### You should probably run with all the available options enabled the first time you run the program
 
@@ -50,12 +47,6 @@ python3 redisvl_1.py -h redis-10400.homelab.local -p 10400 -c y -l y -t y
 python3 redisvl_1.py -h redis-10400.homelab.local -p 10400 -t y
 ```
 
-* This example run -c creates a new Search Index and then -t tries the query:
-
-```
-python3 redisvl_1.py -h redis-10400.homelab.local -p 10400 -c y -t y
-```
-
 * This example run -l loads data into Redis and then -t tries the query:  
 (note that if you run this program more than once with the -l argument the data will grow in size and query results will shift)
 
@@ -63,8 +54,14 @@ python3 redisvl_1.py -h redis-10400.homelab.local -p 10400 -c y -t y
 python3 redisvl_1.py -h redis-10400.homelab.local -p 10400 -l y -t y
 ```
 
+* This example run -c creates a new Search Index and then -t tries the query:
 
-6. If you get errors it is most likely because you haven't configured the host and port and or username and password to your redis server (each example expects you to modify the code to provide these things)
+```
+python3 redisvl_1.py -h redis-10400.homelab.local -p 10400 -c y -t y
+```
+
+
+6. If you get errors it is most likely because you haven't configured the host and port to your redis server
 
 7. If you get no results from your query - try again  - the program flips a coin and is more generous with the results every other time - also, you can make more data for more results by running the program a few times with this argument/flag: 
 
