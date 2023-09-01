@@ -81,3 +81,41 @@ https://redis.readthedocs.io/en/stable/redismodules.html
 useful links for redisvl:
 https://github.com/RedisVentures/redisvl/tree/main 
 https://github.com/RedisVentures/redisvl 
+
+
+#### Here is a sample run with results:
+``` 
+(redisvl) owentaylor@Owens-MacBook-Pro hellovss % python3 redisvl_1.py -h redis-10400.homelab.local -p 10400 -c n -l y -t y
+user_choice for -c == n
+user_choice for -l == y
+user_choice for -t == y
+
+<class 'dict'>
+search_schema loaded
+
+connecting to: host=redis-10400.homelab.local port=10400 ...
+loading data into redis...
+Dummy Data created! - here is a sample of one of the elements and it's length:
+b'\xcd\xccL>\xcd\xccL>\xe8\xb4\x01>'
+
+12
+
+Executing a test query against the redis search index...
+        RESULT:
+
+
+        ISSUING THIS QUERY: 
+(@age:[40 +inf] @age:[-inf 45])=>[KNN 200 @user_embedding $vector AS vector_distance] RETURN 5 user age job credit_score vector_distance SORTBY vector_distance ASC DIALECT 2 LIMIT 0 200
+
+
+Query Results have a length of 2
+
+RESULT:
+ {'id': 'users:0e4b96bcf8d64eb5a5b4f9bbd30bd89d', 'vector_distance': '0.177916705608', 'user': 'joe', 'age': '40', 'job': 'dentist', 'credit_score': 'medium'}
+
+RESULT:
+ {'id': 'users:aa04263d6a7a4c1b8c6e11618d64c920', 'vector_distance': '0.311962246895', 'user': 'mary', 'age': '45', 'job': 'doctor', 'credit_score': 'low'}
+
+
+exiting ...
+```
