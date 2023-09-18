@@ -1,0 +1,19 @@
+index:
+  name: idx_prodcuststat
+  storage_type: hash
+  prefix: pcs
+
+fields:
+  # define text fields
+  # define tag fields
+  # define numeric fields
+  numeric:
+  - name: datetimes
+  # define vector fields 
+  # Choose FLAT and L2 because absolute values matter?
+  vector:
+  - name: prodcuststat_embed
+    dims: 3
+    datatype: float32
+    algorithm: flat
+    distance_metric: L2
