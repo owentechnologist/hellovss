@@ -1,3 +1,13 @@
+This project has several examples of using Redis, RediSearch + VSS and LLM technologies with Python
+
+useful link to python docs for redis:
+https://redis.readthedocs.io/en/stable/redismodules.html 
+
+useful links for redisvl:
+https://github.com/RedisVentures/redisvl/tree/main 
+https://github.com/RedisVentures/redisvl 
+
+SETUP:
 
 1. Create a virtual environment:
 
@@ -75,15 +85,7 @@ python3 redisvl_1.py -h redis-10400.homelab.local -p 10400 -c y -t y
 deactivate
 ```
 
-useful link to python docs for redis:
-https://redis.readthedocs.io/en/stable/redismodules.html 
-
-useful links for redisvl:
-https://github.com/RedisVentures/redisvl/tree/main 
-https://github.com/RedisVentures/redisvl 
-
-
-#### Here is a sample run with results:
+#### Here is a sample run of redisvl_1.py with results:
 ``` 
 (redisvl) owentaylor@Owens-MacBook-Pro hellovss % python3 redisvl_1.py -h redis-10400.homelab.local -p 10400 -c n -l y -t y
 user_choice for -c == n
@@ -119,3 +121,17 @@ RESULT:
 
 exiting ...
 ```
+
+#### Another example uses streamlit to provide a browser-based UI
+This example: localStreamlitChat.py showcases the following flow where:
+* user submits prompt text
+* script uses huggingFace library to create embedding of prompt
+* script stores embedding in RedisVSS as part of a Hash object 
+* RedisVSS adds the Hash object to its search index
+* script searches RedisVSS for similar prompts and their responses
+* if similar prompt and cached response exists, the cached response is sent to UI/User
+* if no cached response exists, script calls LLM to generate new one
+* new response is cached in Redis along with prompt
+* new response is sent to user via UI
+
+![Sequence](./Python_LLM_VSS_CACH.png)
