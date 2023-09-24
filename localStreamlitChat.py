@@ -1,7 +1,8 @@
 # to run execute: > streamlit run localStreamlitChat.py 
 # UI framework for humans:
 import streamlit as st
-#redis imports:
+# redis imports: for caching prompts and responses and 
+# searching using Vector Similarity for previous prompts 
 import redis
 from redis.commands.search.field import VectorField
 from redis.commands.search.query import Query
