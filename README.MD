@@ -123,7 +123,9 @@ exiting ...
 ```
 
 #### Another example uses streamlit to provide a browser-based UI
-This example: localStreamlitChat.py showcases the following flow where:
+
+
+The example: localStreamlitChat.py showcases the following flow where:
 * user submits prompt text
 * script uses huggingFace library to create embedding of prompt
 * script stores embedding in RedisVSS as part of a Hash object 
@@ -135,3 +137,61 @@ This example: localStreamlitChat.py showcases the following flow where:
 * new response is sent to user via UI
 
 ![Sequence](./Python_LLM_VSS_CACH.png)
+
+To start this example you will need to download and remember the path to a LLM model binary to your local machine - the default one (the one in the code) is: 
+
+ggml-model-gpt4all-falcon-q4_0.bin
+
+Which is around 4 GB in size, requires 8GB of RAM, and can be downloaded from huggingface:
+
+https://huggingface.co/nomic-ai/gpt4all-falcon-ggml/tree/main 
+
+Another option which I find produces slower, less predictable results due to it being more 'social' and inclined to repond as a chat or long text with emojis is:
+
+llama-2-7b-chat.ggmlv3.q4_0.bin
+
+Which is a few GB in size, also requires 8GB of ram and can be downloaded from gpt4all:
+
+https://gpt4all.io/index.html
+
+Once you have downloaded one of the generative models above, edit the code in localStreamlitChat.py around line 70 to point to the path on your system that holds the binary file for that model.
+
+NB: The template code for the model which guides it as to how to respond, may need tweaking if you use llama-2-7b-chat.ggmlv3.q4_0.bin  A different template is provided (rename the variable name in your code to assign its value to the template to be used)
+
+You will also need to ensure you are able to access an instance of Redis that includes the Vector Similarity Search Capable RediSearch 2.4 or better Redis module.
+
+Either: 
+1. Edit the code to use the connection information your environment requires to connect to Redis. This will make it so you do not need to pass arguments to the streamlit program
+
+```
+streamlit run localStreamlitChat.py 
+```
+
+2. Provide arguments to the runtime when you start it like this:
+
+```
+streamlit run localStreamlitChat.py e10mods.centralus.redisenterprise.cache.azure.net 10000 qMSEqDfGtQ2SiDgTbhKON8ORGtOqjuLqAfvInIaQB0Aot=
+```
+
+Note that the LLM model is lazy-loaded so that the cached response can come back quicky when the Vector Similarity search identifies a close enough answer in the cache to warrant using that instead of generating a new query.  
+
+Below, you can see the falcon LLM generating an answer takes ~30 seconds, whereas the next query which is slighly different, but shares enough meaning that it uses the cache, takes only ~131 milliseconds to provide the response.
+
+(Note that both executions require the SentenceTransformer to create the embedding for use as the argument to the VSS search.)
+
+```
+falcon_model_load: model size =  3872.59 MB / num tensors = 196
+
+        Elapsed Time to respond to user prompt was: 29.491217664442956 seconds
+
+
+Here is the type of the embedding object: <class 'numpy.ndarray'>
+Index already exists
+
+Found a match! -->
+ Document {'id': 'prompt:Hwmnywlvscmmnlytrvlnpck?:3733', 'payload': None, 'knn_dist': '0.0159949660301', 'prompt:abbrev': 'Hwmnywlvscmmnlytrvlnpck?:3733', 'response': 'prompt:response:4'}
+
+keyname of cached response: prompt:response:4
+
+        Elapsed Time to respond to user prompt was: 0.13123149331659079 seconds
+```

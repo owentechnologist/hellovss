@@ -12,19 +12,37 @@ from langchain.llms import GPT4All
 from langchain.chains import LLMChain
 from langchain.prompts.prompt import PromptTemplate
 # general imports
-import re, random
+import re,time,sys
 
 ### General Setup / functions: ###
-def rem_vowel_and_trim(payload):
+## this function is designed to return a likely to be unique value for a string
+## a bloom or cuckoo filter used for deduping would be better
+## redis has a bloom module designed for that purpose
+def compact_string_for_keyname(payload):
     #print(f'rem_vowel: payload is of type {type(payload)}')
     payload_string1 = payload[0]
     payload_string1 = payload_string1.replace(" ", "")
     #print(f'payload_string1 == {payload_string1} and is of type: {type(payload_string1)}')
-    return(re.sub("[aeiouAEIOU]","",payload_string1))
+    sumchars=0
+    for s in payload_string1:
+        sumchars = sumchars+ord(s)
+    response = f'{re.sub("[aeiouAEIOU]","",payload_string1)}:{sumchars}'
+    return(response)
 
 ### Redis Setup / functions: ###
+redis_host = 'redis-12000.homelab.local'
+redis_port = 12000
+redis_password = ""
+redis_user = "default"
+if len(sys.argv) > 2:
+    redis_host=sys.argv[1]
+    redis_port=sys.argv[2]
+if len(sys.argv) > 3:
+    redis_password=sys.argv[3]
+if len(sys.argv) > 4:
+    redis_user = sys.argv[5]
 
-redis_connection = redis.Redis(host='redis-12000.homelab.local', port=12000, encoding='utf-8', decode_responses=True)
+redis_connection = redis.Redis( host=redis_host, port=redis_port, password=redis_password ,username=redis_user, encoding='utf-8', decode_responses=True)
 index_name = 'idx_vss'
 
 # this function executes the VSS search call against Redis
@@ -48,36 +66,43 @@ SCHEMA = [
 ### LLM / AI Setup / functions ###
 # where is the LLM library of 'weights'?
 # what engine will we use to answer our prompts?
-random_int = random.randint(1,2)
-lib_path ='/Users/owentaylor/Library/Application Support/nomic.ai/GPT4All/llama-2-7b-chat.ggmlv3.q4_0.bin'
-if random_int == 1:
-    lib_path = '/Users/owentaylor/Library/Application Support/nomic.ai/GPT4All/llama-2-7b-chat.ggmlv3.q4_0.bin'
+#lib_path ='/Users/owentaylor/Library/Application Support/nomic.ai/GPT4All/llama-2-7b-chat.ggmlv3.q4_0.bin'
+lib_path = '/Users/owentaylor/Library/Application Support/nomic.ai/GPT4All/ggml-model-gpt4all-falcon-q4_0.bin'
 
-# create LLM object:
-llm=GPT4All(model=lib_path,verbose=False,repeat_penalty=1.5)
+def create_and_fetchLLM():
+    # create LLM object:
+    return(GPT4All(model=lib_path,verbose=False,repeat_penalty=1.5))
 
 # a little prompt engineering is needed to get the answers in a usable format:
 
 template="""
+    The prompt below is a question for you to answer.
+    Do not include any preamble, but instead focus on the answer you give.
+    
+    Format your response as a college student's brief notes on the subject.
+    
+    Question: the input question you must answer {question}
+
+    Begin! Remember to respond with 'I don't know' if you do not know the answer.
+    """    
+
+# if using Llama-2-7b you will need to use this or a similar template: (rename the variable below to 'template')
+template_llama_rename_me_to_template_if_needed="""
     The prompt below is a question to answer.
     If you don't know the answer, celebrate that you don't know and congratulate the user, don't try to make up an answer.
     Use the following format:
 
     Question: the input question you must answer {question}
 
-    Begin! Remember to speak as a friend when giving your final answer and share exact information asked by user. 
+    Begin! Remember to speak as an educator when giving your answer and do not use emojis. 
     Do not add prefixes like Human: and AI:. 
     Do not prefix your answer with any caveat.
-    Do not respond with I'm just an AI,
+    
+    Keep the Answer to under 150 words.
     If asked to write a poem, make that the priority and ensure every line in your response uses iambic pentameter.
 
-    Answer: Step through this with me
+    Answer: Step through this with me ...
     """    
-## Setup the LLM PromptTemplate so it can be added to the chain:
-prompt_template=PromptTemplate(template=template,input_variables=['question'])
-
-# bring prompt and LLM chain together:
-llmChain = LLMChain(prompt=prompt_template,llm=llm)
 
 #display something to UI (Web Page):
 st.title('Is This Thing On?')
@@ -103,15 +128,17 @@ except Exception as e:
     #print(conn.ft(index_name).info())
 
 
-# pass the user text to the LLM Chain and print out the response: 
+# pass the user text/prompt to the LLM Chain and print out the response: 
+# also, check for a suitable cached response
 if user_input:
-    trimmed_question = rem_vowel_and_trim(sentences)
+    start_time=time.perf_counter()
+    trimmed_question = compact_string_for_keyname(sentences)
     prompt_hash = {
         "prompt:abbrev": trimmed_question,
         "embedding": embedding_vector_as_bytes,
         "response": ""
     }
-    #random_int = random.randint(1,100000000)
+
     if not redis_connection.exists(f"prompt:{trimmed_question}"):
         redis_connection.hset(name=f"prompt:{trimmed_question}", mapping=prompt_hash)
 
@@ -124,16 +151,19 @@ if user_input:
     found_useful_result = False
     llm_response = ""
     for next_result in results:
-        if next_result.response == "":
-            print(f'result has no response: {type(next_result.response)}')
-        else:
+        if not next_result.response == "":
             # ensure that we only reuse a response that is suitable
-            # cached responses are stored in strings 
-            # and their keys are added to the cached prompt hash object
-            # this decouples the storage of the answer allowing for less waste
-            if (float(next_result.knn_dist) < .2):
+            # cached responses are stored as strings in redis 
+            # and the keyname for the relevant string is stored in the 
+            # response attribute of the prompt Hash object in Redis.
+            # This decouples the storage of the answer allowing for more reuse
+            # answers stored this way can easily be edited and all similar prompts will 
+            # point to this now, updated response|answer
+            if (float(next_result.knn_dist) < .2) and (next_result.response != "") :
+                print(f'\nFound a match! -->\n {next_result}\n')
                 found_useful_result = True
-                llm_response_cache_key = redis_connection.get(next_result.response)
+                # llm_reponse_cache_key should point to a string in redis:
+                llm_response_cache_key=next_result.response
                 print(f'keyname of cached response: {llm_response_cache_key}')
                 llm_response=redis_connection.get(llm_response_cache_key)
         if found_useful_result: 
@@ -141,15 +171,24 @@ if user_input:
             # in this way, multiple prompts will share the same result
             redis_connection.hset(results[0].id,'response',llm_response_cache_key)
             break
+    # we have exhausted all the potential matches:
     if not found_useful_result:
+        print('\n No suitable response has been cached.  Generating new Response...\n')
         # create a new AI-generated result as the answer            
+        ## Setup the LLM PromptTemplate so it can be added to the chain:
+        prompt_template=PromptTemplate(template=template,input_variables=['question'])
+
+        # bring prompt and LLM chain together:
+        llmChain = LLMChain(prompt=prompt_template,llm=create_and_fetchLLM())
+
         llm_response = llmChain.run(user_input)
         x = redis_connection.incr('prompt:responsekeycounter')
         # store the full response in a string in redis under the keyname prompt:response:x
         redis_connection.set(f'prompt:response:{x}',llm_response)
         # write the cached response keyname to the response attribute in redis:
+        # due to sorting of the results by KNN distance ASC the first result should be our target:
         redis_connection.hset(results[0].id,'response',(f'prompt:response:{x}'))            
     
     # output whatever the result it to the User Interface:
     st.write(llm_response.replace('\n', '<br />'),unsafe_allow_html=True)
- 
+    print(f'\n\tElapsed Time to respond to user prompt was: {(time.perf_counter()-start_time)*1} seconds\n')
