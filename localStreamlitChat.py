@@ -31,6 +31,7 @@ def compact_string_for_keyname(payload):
     return(response)
 
 ### Redis Setup / functions: ###
+## checks sys.args for host and port etc...
 redis_host = 'redis-12000.homelab.local'
 redis_port = 12000
 redis_password = ""
@@ -43,7 +44,11 @@ if len(sys.argv) > 3:
 if len(sys.argv) > 4:
     redis_user = sys.argv[5]
 
-redis_connection = redis.Redis( host=redis_host, port=redis_port, password=redis_password ,username=redis_user, encoding='utf-8', decode_responses=True)
+if redis_password == "" and redis_user == "default":
+    redis_connection = redis.Redis( host=redis_host, port=redis_port, encoding='utf-8', decode_responses=True)
+else:
+    redis_connection = redis.Redis( host=redis_host, port=redis_port, password=redis_password ,username=redis_user, encoding='utf-8', decode_responses=True)
+
 index_name = 'idx_vss'
 
 # this function executes the VSS search call against Redis
@@ -60,10 +65,6 @@ def vec_search(vindex,query_vector_as_bytes):
     res = vindex.search(query, query_params = {'vec_param': query_vector_as_bytes, 'knn_vec': query_vector_as_bytes})
     return res.docs
 
-SCHEMA = [
-    VectorField("embedding", "FLAT", {"TYPE": "FLOAT32", "DIM": 768, "DISTANCE_METRIC": "COSINE"}),
-]
-
 ### LLM / AI Setup / functions ###
 # where is the LLM library of 'weights'?
 # what engine will we use to answer our prompts?
@@ -77,14 +78,17 @@ def create_and_fetchLLM():
 # a little prompt engineering is needed to get the answers in a usable format:
 
 template="""
-    The prompt below is a question for you to answer.
-    Do not include any preamble, but instead focus on the answer you give.
-    
-    Format your response as a college student's brief notes on the subject.
-    
-    Question: the input question you must answer {question}
+    You are a sophisticated program that likes to answer questions given to you as input.
+    The prompt that follows is input and a question for you to answer.
+    If you are unsure of how to respond, that means that you do not know the answer.
+    It is OK if you do not know the answer. You can admit you do not know.
+    Remember to format your answer as a college student's brief notes on the subject
+    Remember to walk through it step by step.
 
-    Begin! Remember to respond with 'I don't know' if you do not know the answer.
+    Question: the input question you must answer {question}
+    Answer: the response you give that shows the answer. 
+
+    Begin! If you do not know the answer: remember to respond with 'I don't know, please tell my trainer: bob@trainme.ai'.
     """    
 
 # if using Llama-2-7b you will need to use this or a similar template: (rename the variable below to 'template')
@@ -120,6 +124,10 @@ embeddings = model.encode(sentences)
 print(f'\nHere is the type of the embedding object: {type(embeddings)}')
 # convert the embedding numpy array to bytes for use in Redis Hash:
 embedding_vector_as_bytes = embeddings.tobytes()
+
+SCHEMA = [
+    VectorField("embedding", "FLAT", {"TYPE": "FLOAT32", "DIM": 768, "DISTANCE_METRIC": "COSINE"}),
+]
 
 # Create the index
 try:

@@ -1,7 +1,6 @@
 from redisvl.index import SearchIndex
 from redisvl.query import VectorQuery
 from redisvl.query.filter import Tag,Num
-from redisvl.index import SearchIndex
 import yaml,sys,getopt,random 
 import numpy as np
 

@@ -123,7 +123,7 @@ exiting ...
 ```
 
 #### Another example uses streamlit to provide a browser-based UI
-
+ (This example does not use the RedisVL library and manages key names deliberately rather than having a library generate a unique key for each embedding)
 
 The example: localStreamlitChat.py showcases the following flow where:
 * user submits prompt text
