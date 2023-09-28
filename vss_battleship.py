@@ -1,5 +1,5 @@
 from redisvl.index import SearchIndex
-import redis
+import time
 from redis.commands.search.query import Query
 import yaml,sys,getopt,random 
 import numpy as np
@@ -15,6 +15,14 @@ def load_schema_definition():
 def initialize_redis_index(host,port,search_schema):
     # initialize the connection to Redis
     connection_string = "redis://"+host+":"+port
+    index = SearchIndex.from_dict(search_schema)
+    index.connect(connection_string)
+    return index
+
+def initialize_redis_index_with_password(host,port,search_schema,password):
+    # initialize the connection to Redis
+    #redis://user123:pass123@my-web.cache.amazonaws.com:6379
+    connection_string = "redis://default:"+password+"@"+host+":"+port
     #connection_string = "rediss://default:Tw6ILWm45CnQ36Iuu9HeGkmLuNm96vEOz8e818yd4Mw=@redisDB.southcentralus.redisenterprise.cache.azure.net:10000"    
     index = SearchIndex.from_dict(search_schema)
     index.connect(connection_string)
@@ -26,57 +34,95 @@ def create_index(index):
 def make_ship_shape_from_anchorXY(anchorX,anchorY):
     anchorX=int(anchorX)
     anchorY=int(anchorY)
-    print(f' Target generated ship has anchorX of {anchorX} and anchorY of {anchorY}')
-    ship_shape_point_pairs=np.empty(28, dtype=np.dtype('f')) 
+    # make sure ship fits in our small grid 10x10:
+    if anchorX<2:
+        anchorX = 2
+    if anchorX>8:
+        anchorX = 8
+    if anchorY<1:
+        anchorY = 1
+    if anchorY>4:
+        anchorY = 4
+    anchor_point=anchorX+(anchorY*10)
+    print(f' Target generated battleship has anchor_point of {anchorX+(anchorY*10)}')
     # make the ship cigar-shaped first by increasing the X distance 
     # between each pointXY1 and pointXY2 before doing the opposite
-    for point_pair in range(1,14):
-        pointXY1 = ((10)+anchorX+anchorY+(point_pair*10))/100000
-        pointXY2 = (((10)+anchorX+(point_pair*10))+anchorY+(point_pair*10))/100000        
-        ship_shape_point_pairs[point_pair]=(pointXY1*pointXY2)       
-    for point_pair in range(1,14):
-        pointXY1 = ((10)+anchorX+anchorY+((point_pair+14)*10))/100000
-        pointXY2 = (((10)+anchorX-(point_pair*10))+anchorY+((point_pair+14)*10))/100000
-        ship_shape_point_pairs[point_pair+14]=(pointXY1*pointXY2)
-    print(f'ship_shape_point_pairs length = {len(ship_shape_point_pairs)}')
-    thing = np.array(ship_shape_point_pairs, dtype=np.float32).tobytes()
+    # first iteration has no distinction of ship class (all the same)
+    # picture a grid w/ 100 squares (10x10) <-- this is a quadrant
+    # each object stored in redis is its own quadrant
+    # for each square, place a zero if the ship does not overlap it
+    # ^ place a 1 if the ship overlaps that square
+    # the grid is flattened to a single array of 100 elements
+    # x=2, y=2 would live at element (x)+(y*10)  or: 12
+    # x=9, y=4 would live at element (x)+(y*10)  or: 49
+    # starting from that anchor point - mark other occupied squares 
+    # All ships must fit in a quadrant
+    # anchor values for y must be lower than 4
+    # anchor values for x must be between 2 and 8
+    # 1 square wide at their anchor point and 2 more on the Y axis 
+    # 3 squares wide from the 3rd through the 5th on the y axis
+    # 1 square wide for 2 more squares on the y axis
+    #           []        <-- anchor_point + 60
+    #           []        <-- anchor_point + 50
+    #         [][][]      <-- anchor_point + 39,40,41
+    #         [][][]      <-- anchor_point + 29,30,31
+    #         [][][]      <-- anchor_point + 19,20,21
+    #           []        <-- anchor_point + 10
+    #           []        <-- anchor_point
+    ship_points=[anchor_point,anchor_point+10,anchor_point+19,
+                 anchor_point+20,anchor_point+21,anchor_point+29,
+                 anchor_point+30,anchor_point+31,anchor_point+39,
+                 anchor_point+40,anchor_point+41,anchor_point+50,
+                 anchor_point+60]
+    ship_list=[]
+
+    for point in range(1,101):
+        if point in ship_points:
+            ship_list.append(1.0)
+        else:
+            ship_list.append(0.0)
+
+    print(f'\n\nship_list length = {len(ship_list)}\n')
+    for x in range(1,10):
+        for y in range(1,10):
+            if ship_list[x+(y*10)]>0:
+                print('[]',end="")
+            else:
+                print(' ',end="")
+        print("")
+    thing = np.array(ship_list, dtype=np.float32).tobytes()
     print(f'np.array result is of type: {type(thing)}')
     return (thing)
 
 # in this game a non-player role (the user) guesses the anchor point and
-# player_ID: either 'player1' or 'player2'
-# this function generates a ship for a random player with random anchors
+# quadrant: from 1 to 10
+# this function generates a ship for a random quadrant with a random anchor
 def create_data():
 # create some dummy data: (can be called repeatedly to generate more data)
-    # Each ship has 28 pairs of X,Y coordinates that define 
-    # its shape & placement 
-    # smaller ships have points that are closer together 
-    # for simplicity, let's start with two ships
-    # they will be between 200 and 500 measures apart
-    # a measure is the standard distance between point aX,aY and bX,bY
-    # for this initial game we will make that measure 10 
-    # for large ships and 3 for small ships
-    # Vector Similarity expects floating point values
-    # so we divide each point value by 100000
-    # start with an anchor point for each ship
-    # anchor values fall between 200,501 and 500,1100
-    player_num = random.randint(1,2)
-    battle_ship_classes =['Destroyer','Aircraft_Carrier','Skiff','Submarine']
-    anchorX = (random.randint(200,500))
-    anchorY = (random.randint(1,100)+(player_num*500))
-    player_ID = f'player{str(player_num)}'
+    # Each ship takes up some portion of 100 points in a 2d matrix 
+    # the grid and ship within it has an assigned quadrant 
+    # there are 10 possible quadrants for now
+    # (that could someday become a Lat/Long and use Redis geospatial query)
+    battleship_id = time.clock_gettime_ns(time.CLOCK_MONOTONIC)
+    battle_ship_classes =['Skiff','Destroyer','Aircraft_Carrier','Submarine']
+    anchorX = (random.randint(2,8))
+    anchorY = (random.randint(1,4))
+    quadrant = (random.randint(1,10))
+    anchorpoint = anchorX+(10*anchorY)
     data = [
         {
-            "player_ID": player_ID,
-            "battlehip_class": battle_ship_classes[random.randint(1,3)],
+            "anchorpoint": anchorpoint,
+            "quadrant": quadrant,
+            "battleship_id": battleship_id,
+            "battleship_class": battle_ship_classes[random.randint(1,3)],
             "coordinates_embedding": make_ship_shape_from_anchorXY(anchorX,anchorY),
         },
     ]
 
-    print("Dummy Ship shape_and_coordinates created! - here is a sample of one of the elements and it's length:")
-    print([value for value in data[0].values()][1])
+    print("Ship shape_and_coordinates created! - here is a sample of one of the elements and it's length:")
+    print([value for value in data[0].values()][2])
     print()
-    print(len([value for value in data[0].values()][1]))
+#    print(len([value for value in data[0].values()][1]))
     print()
     return data
 
@@ -86,44 +132,51 @@ def load_data(index,data):
 
 # this function executes the VSS search call against Redis
 # it accepts a redis index (generated by calling connection)
-def vec_search(vindex,query_vector_as_bytes):
-    print(f'\nvec_search() --> vindex is of type: {type(vindex)}  embedding is of type: {type(query_vector_as_bytes)}')
+def vec_search(index,quadrant,query_vector_as_bytes):
+    print(f'\nvec_search() --> vindex is of type: {type(index)}  embedding is of type: {type(query_vector_as_bytes)}')
     # KNN 10 specifies to return only up to 10 nearest results (could be unrelated)
     # VECTOR_RANGE specifies the prompts must be similar
     query =(
-        Query(f'(@coordinates_embedding:[VECTOR_RANGE .000000002 $vec_param]=>{{$yield_distance_as: range_dist}})=>[KNN 10 @coordinates_embedding $knn_vec]=>{{$yield_distance_as: knn_dist}}')
+        Query(f'(@quadrant:[{quadrant},{quadrant}] @coordinates_embedding:[VECTOR_RANGE .09 $vec_param]=>{{$yield_distance_as: range_dist}})=>[KNN 10 @coordinates_embedding $knn_vec]=>{{$yield_distance_as: knn_dist}}')
         .sort_by(f'knn_dist') #asc is default order
-        .return_fields("player_ID", "battlehip_class", "knn_dist")
+        .return_fields("quadrant", "battleship_id", "knn_dist")
         .dialect(2)
     )
-    res = vindex.search(query, query_params = {'vec_param': query_vector_as_bytes, 'knn_vec': query_vector_as_bytes})
+    res = index.search(query, query_params = {'vec_param': query_vector_as_bytes, 'knn_vec': query_vector_as_bytes})
     return res.docs
 
 # start with an anchor point for each ship
 # anchor values fall between 200,501 and 500,1100
 # also search by player_num 1 or 2: 
-def do_search_query(index,anchorX,anchorY,player_num):
+def do_search_query(index,anchorX,anchorY,quadrant):
     #filterexpres = ("player_ID") == f'player{str(player_num)}'
-    print(f'query is--> \nplayer_ID is player{str(player_num)}')
+    print(f'query is--> \nquadrant is {quadrant}')
     print(f'anchorX == {anchorX}  anchorY == {anchorY} ')
     vector=make_ship_shape_from_anchorXY(anchorX,anchorY)
-    results = vec_search(index,vector)
+    results = vec_search(index=index,quadrant=quadrant,query_vector_as_bytes=vector)
     print(f'\nQuery Results have a length of {len(results)}')
     return results
 
+# python3 vss_battleship.py -h redis-12144.c309.us-east-2-1.ec2.cloud.redislabs.com -p 12144 -s WqedzS2orEF4Dh0baBeaRqo16DrYYxzIo1 -c y -l y -t y
+# python3 vss_battleship.py -h e10mods.centralus.redisenterprise.cache.azure.net -p 10000 -s zCRAJicy3XtEp1YfACM+P3kodoSqviXFeVFhwy1gSP0o1= -c y -l y -t y
+# python3 vss_battleship.py -h e10mods.centralus.redisenterprise.cache.azure.net -p 10000 -s zCRAJicy3XtEp1YfACM+P3kodoSqviXFeVFhwy1gSP0o1= -c n -l n -t y
 if __name__ == "__main__":
     print(f'MAIN FUNCTION CALLED')
     # TODO: edit or supply as args the host and port to match your redis database endpoint:
     host="localhost"
     port="6379"
+    password = ""
+    username ="default"
     createNewIndex = False
     loadData = False
     testQuery = False
     user_choice ='n'
     argv = sys.argv[1:] # skip the name of this script
-    opts,args = getopt.getopt(argv,"h:p:c:l:t:", 
+    opts,args = getopt.getopt(argv,"h:p:s:u:c:l:t:", 
                                    ["host =",
                                     "port =",
+                                    "password =",
+                                    "username =",
                                     "create_new_index =",
                                     "load_data =",
                                     "test_query ="
@@ -133,6 +186,10 @@ if __name__ == "__main__":
             host = arg
         elif opt in ['-p','-port']:
             port = arg
+        elif opt in ['-s','-secret_password']:
+            password = arg
+        elif opt in ['-u','-username']:
+            username = arg
         elif opt in ['-c','--create_new_index']:
             user_choice = arg
             print(f'user_choice for {opt} == {user_choice}')                 
@@ -160,7 +217,10 @@ if __name__ == "__main__":
             search_schema = load_schema_definition()
             print("search_schema loaded")
             print(f"\nconnecting to: host={host} port={port} ...")
-            rindex = initialize_redis_index(host,port,search_schema)
+            if password=="":
+                rindex = initialize_redis_index(host,port,search_schema)
+            else:
+                rindex = initialize_redis_index_with_password(host,port,search_schema,password)    
             if createNewIndex:
                 print('creating a new index in redis...')
                 create_index(rindex)
@@ -169,12 +229,16 @@ if __name__ == "__main__":
                 load_data(rindex,create_data())
             if testQuery:
                 print('Executing a test query against the redis search index...\n\tRESULT:\n')
-                anchorX = input("enter an integer between 200 and 500 for target X coordinate :   ")
-                anchorY = input("enter an integer between 501 and 1100 for target Y coordinate :   ")
-                player_num = input("enter an integer between 1 and 2 for target player_num :   ")
-                qresults = do_search_query(index=rindex,anchorX=anchorX,anchorY=anchorY,player_num=player_num)
+                anchorX = input("enter an integer between 2 and 8 for target X coordinate :   ")
+                anchorY = input("enter an integer between 1 and 4 for target Y coordinate :   ")
+                quadrant = input("enter an integer between 1 and 10 for target quadrant :   ")
+                qresults = do_search_query(index=rindex,anchorX=anchorX,anchorY=anchorY,quadrant=quadrant)
+                hit_counter = 0
                 for r in qresults:
-                    print(f'\nHere are the ships you HIT...:\n {r}')
+                    print(f'\nYou HIT Something! ...:\n {r}')
+                    hit_counter=hit_counter+1
+                if hit_counter == 0:
+                    print("You Missed!")
                 print('\n\nexiting ...')
         #except Exception as e:
          #   print(f'You may need more data loaded,\n or... You may need to provide different command line arguments for your host and port, etc')

@@ -1,5 +1,5 @@
 index:
-  name: idx_vss_battleship
+  name: idx_battleship
   storage_type: hash
   prefix: battleship
 
@@ -8,17 +8,16 @@ fields:
   # define tag fields
   # define numeric fields
   tag:
-  - name: battlehip_class
+  - name: battleship_class
   text:
   - name: battleship_id
-  - name: player_ID
+  numeric:
+  - name: quadrant
+  - name: anchorpoint
   # define vector fields 
-  # our ships will have 28 dimensions (XY_pair_points) that compose their 
-  # shape and placement on the grid
-  # Choose FLAT and L2 because absolute values matter
   vector:
   - name: coordinates_embedding
-    dims: 28
+    dims: 100
     datatype: float32
     algorithm: flat
     distance_metric: L2

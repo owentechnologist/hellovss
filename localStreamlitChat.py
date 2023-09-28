@@ -90,7 +90,12 @@ template="""
 
     Begin! If you do not know the answer: remember to respond with 'I don't know, please tell my trainer: bob@trainme.ai'.
     """    
-
+template_with_context="""
+Answer the following question: {question}
+Only use the following information to answer:
+{context}
+Answer:
+"""
 # if using Llama-2-7b you will need to use this or a similar template: (rename the variable below to 'template')
 template_llama_rename_me_to_template_if_needed="""
     The prompt below is a question to answer.
