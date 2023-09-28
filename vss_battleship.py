@@ -82,14 +82,14 @@ def make_ship_shape_from_anchorXY(anchorX,anchorY):
         else:
             ship_list.append(0.0)
 
-    print(f'\n\nship_list length = {len(ship_list)}\n')
-    for x in range(1,10):
-        for y in range(1,10):
+    for y in range(0,10):
+        print("|",end="")
+        for x in range(0,10):
             if ship_list[x+(y*10)]>0:
-                print('[]',end="")
+                print('[ ]',end="")
             else:
-                print(' ',end="")
-        print("")
+                print(' * ',end="")
+        print(" |")
     thing = np.array(ship_list, dtype=np.float32).tobytes()
     print(f'np.array result is of type: {type(thing)}')
     return (thing)
@@ -119,10 +119,8 @@ def create_data():
         },
     ]
 
-    print("Ship shape_and_coordinates created! - here is a sample of one of the elements and it's length:")
-    print([value for value in data[0].values()][2])
-    print()
-#    print(len([value for value in data[0].values()][1]))
+    print("Ship shape_and_coordinates created! - here is a sample of one of the elements:")
+    print([value for value in data[0].values()][3])
     print()
     return data
 
