@@ -1,5 +1,5 @@
 from redisvl.index import SearchIndex
-import time
+import time,redis 
 from redis.commands.search.query import Query
 import yaml,sys,getopt,random 
 import numpy as np
@@ -30,7 +30,17 @@ def initialize_redis_index_with_password(host,port,search_schema,password):
 
 def create_index(index):
     index.create(overwrite=True)
-    
+
+def blast_ship_out_of_existence(ship_key,host,port):
+    ship_store = redis.from_url("redis://"+host+":"+port)
+    ship_store.delete(ship_key)
+    print('\t\t!!KABLOOEY!!')
+
+def blast_ship_out_of_existence_with_password(ship_key,host,port,password):
+    ship_store = redis.from_url("redis://default:"+password+"@"+host+":"+port)
+    ship_store.delete(ship_key)
+    print('\t\t!!KABLOOEY!!')
+
 def make_ship_shape_from_anchorXY(anchorX,anchorY):
     anchorX=int(anchorX)
     anchorY=int(anchorY)
@@ -232,6 +242,11 @@ if __name__ == "__main__":
                 hit_counter = 0
                 for r in qresults:
                     print(f'\nYou HIT Something! ...:\n {r}')
+                    sinkit = input(f'\nShould we blast that ship out of the water (remove it from Redis)? Y/N :')
+                    if sinkit=="Y" and password=="":
+                        blast_ship_out_of_existence(ship_key=r.id,host=host,port=port)
+                    elif sinkit=="Y" and password!="":
+                         blast_ship_out_of_existence_with_password(ship_key=r.id,host=host,port=port,password=password)
                     hit_counter=hit_counter+1
                 if hit_counter == 0:
                     print("You Missed!")

@@ -21,3 +21,4 @@ fields:
     datatype: float32
     algorithm: flat
     distance_metric: L2
+    initial_cap: 7000
