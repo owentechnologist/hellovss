@@ -77,28 +77,19 @@ def create_and_fetchLLM():
 
 # a little prompt engineering is needed to get the answers in a usable format:
 
-template="""
-    You are a sophisticated program that likes to answer questions given to you as input.
-    The prompt that follows is input and a question for you to answer.
-    If you are unsure of how to respond, that means that you do not know the answer.
-    It is OK if you do not know the answer. You can admit you do not know.
-    Remember to format your answer as a college student's brief notes on the subject
-    Remember to walk through it step by step.
+template="""The prompt that follows is a question you must answer:
+    
+    Question: the input you must answer {question}
 
-    Question: the input question you must answer {question}
-    Answer: the response you give that shows the answer. 
-
-    Begin! If you do not know the answer: remember to respond with 'I don't know, please tell my trainer: bob@trainme.ai'.
+    Format the answer as a brief article
+      
+    Begin! ...
     """    
-template_with_context="""
-Answer the following question: {question}
-Only use the following information to answer:
-{context}
-Answer:
-"""
-# if using Llama-2-7b you will need to use this or a similar template: (rename the variable below to 'template')
+
+# try your hand at prompt engineering by playing with this template: (rename the variable below to 'template')
 template_llama_rename_me_to_template_if_needed="""
     The prompt below is a question to answer.
+    You are a gangster from 1940
     If you don't know the answer, celebrate that you don't know and congratulate the user, don't try to make up an answer.
     Use the following format:
 
