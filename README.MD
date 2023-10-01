@@ -39,8 +39,12 @@ redisvl>=0.0.3
 ```
 pip3 install -r requirements.txt
 ```
+5. Download one of the LLM libraries needed to test the generative examples:
 
-5. Execute the redisvl_1.py code (or another example) from the project directory:
+```
+wget --no-check-certificate https://huggingface.co/nomic-ai/gpt4all-falcon-ggml/resolve/main/ggml-model-gpt4all-falcon-q4_0.bin
+```
+6. Execute the redisvl_1.py code (or another example) from the project directory:
 
 #### You should probably run with all the available options enabled the first time you run the program
 

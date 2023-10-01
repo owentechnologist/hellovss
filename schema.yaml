@@ -21,3 +21,4 @@ fields:
     datatype: float32
     algorithm: flat
     distance_metric: cosine
+    initial_cap: 1000
