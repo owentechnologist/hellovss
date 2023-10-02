@@ -15,8 +15,8 @@ def load_schema_definition():
 
 def initialize_redis_index(host,port,search_schema):
     # initialize the connection to Redis
-    #connection_string = "redis://"+host+":"+port
-    connection_string = "rediss://default:Tw6ILWm45CnQ36Iuu9HeGkmLuNm96vEOz8e818yd4Mw=@redisDB.southcentralus.redisenterprise.cache.azure.net:10000"    
+    connection_string = "redis://"+host+":"+port
+    #connection_string = "rediss://default:Tw6ILWm45CnQ36Iuu9HeGkmLuNm96vEOz8e818yd4Mw=@redisDB.southcentralus.redisenterprise.cache.azure.net:10000"    
     index = SearchIndex.from_dict(search_schema)
     index.connect(connection_string)
     return index

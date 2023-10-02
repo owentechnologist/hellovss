@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # to run this example you will need the following :
 """ 
 ggml-model-gpt4all-falcon-q4_0.bin or llama-2-7b-chat.ggmlv3.q4_0.bin or a similar LLM
@@ -19,12 +18,6 @@ python localCMDLineChat.py -h <host> -p <port> [optional -s <password>] [optiona
 python3 localCMDLineChat.py redis-12144.c309.us-east-2-1.ec2.cloud.redislabs.com 12144 WqedzS2orEF4Dh0baBeaRqo16DrYYxzIo1
 python3 localCMDLineChat.py -h redis-12000.homelab.local -p 12000
 """
-=======
-# to run execute: > python localCMDLineChat.py <host> <port> [optional<password>] [optional<username>] 
-# python3 localCMDLineChat.py redis-12144.c309.us-east-2-1.ec2.cloud.redislabs.com 12144 WqedzS2orEF4Dh0baBeaRqo16DrYYxzIo1
-# python3 localCMDLineChat.py redis-12000.homelab.local 12000
-
->>>>>>> 43a7746d08bb326ca5953c1a68325aea5bdfe961
 # This version only uses cmdline interface
 # redis imports: for caching prompts and responses and 
 # searching using Vector Similarity for previous prompts 
@@ -87,11 +80,7 @@ opts,args = getopt.getopt(argv,"h:p:s:u:",
                                 ]) 
 for opt,arg in opts:
     if opt in ['-h','-host']:
-<<<<<<< HEAD
         redis_host = arg
-=======
-        redi_host = arg
->>>>>>> 43a7746d08bb326ca5953c1a68325aea5bdfe961
     elif opt in ['-p','-port']:
         redis_port = arg
     elif opt in ['-s','-secret_password']:
@@ -141,11 +130,7 @@ def vec_search(vindex,query_vector_as_bytes):
 # where is the LLM library?
 # In Other Words: what large language model will we use to answer our prompts?
 #lib_path ='/Users/owentaylor/Library/Application Support/nomic.ai/GPT4All/llama-2-7b-chat.ggmlv3.q4_0.bin'
-<<<<<<< HEAD
 lib_path = './ggml-model-gpt4all-falcon-q4_0.bin'
-=======
-lib_path = '/Users/owentaylor/Library/Application Support/nomic.ai/GPT4All/ggml-model-gpt4all-falcon-q4_0.bin'
->>>>>>> 43a7746d08bb326ca5953c1a68325aea5bdfe961
 
 def create_and_fetchLLM():
     # create LLM object:
