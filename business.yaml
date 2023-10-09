@@ -1,0 +1,27 @@
+index:
+  name: idx_business
+  storage_type: hash
+  prefix: business
+
+fields:
+  # define text fields
+  # define tag fields
+  # define numeric fields
+  # define geospatial fields
+  tag:
+  - name: business_category
+  text:
+  - name: business_name
+  geo:
+  - name: expected_location
+  numeric:
+  - name: quadrant
+  - name: business_id
+  # define vector fields 
+  vector:
+  - name: business_embedding
+    dims: 100
+    datatype: float32
+    algorithm: flat
+    distance_metric: L2
+    initial_cap: 1000
