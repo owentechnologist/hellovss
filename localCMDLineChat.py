@@ -15,7 +15,7 @@ lib_path = './ggml-model-gpt4all-falcon-q4_0.bin'
 # execute: > 
 """ 
 python localCMDLineChat.py -h <host> -p <port> [optional -s <password>] [optional -u <username>] 
-python3 localCMDLineChat.py redis-12144.c309.us-east-2-1.ec2.cloud.redislabs.com 12144 WqedzS2orEF4Dh0baBeaRqo16DrYYxzIo1
+python3 localCMDLineChat.py -h redis-12144.c309.us-east-2-1.ec2.cloud.redislabs.com -p 12144 -s WqedzS2orEF4Dh0baBeaRqo16DrYYxzIo1
 python3 localCMDLineChat.py -h redis-12000.homelab.local -p 12000
 """
 # This version only uses cmdline interface
