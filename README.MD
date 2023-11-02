@@ -9,6 +9,9 @@ https://github.com/RedisVentures/redisvl
 
 SETUP:
 
+If you intend to utilize the local language models you need to install https://gpt4all.io/index.html (do this before you do anything else)
+
+
 1. Create a virtual environment:
 
 ```

@@ -16,7 +16,6 @@ def load_schema_definition():
 def initialize_redis_index(host,port,search_schema):
     # initialize the connection to Redis
     connection_string = "redis://"+host+":"+port
-    #connection_string = "rediss://default:Tw6ILWm45CnQ36Iuu9HeGkmLuNm96vEOz8e818yd4Mw=@redisDB.southcentralus.redisenterprise.cache.azure.net:10000"    
     index = SearchIndex.from_dict(search_schema)
     index.connect(connection_string)
     return index
@@ -35,9 +34,17 @@ def create_data():
     # to create a status randomly generate value 1-7 divide by 100
     status = (random.randint(1,7)/100)
     datatimestamp = 1633955921695+(100*(random.randint(1,100000000))) 
+    business_category =['restaurant','fastfood','manicure','haircut','beauty','grocery','automotive','collectibles','crafts','decor','toys','bags','belts','wallets','hats','jewellry','scarves','sunglasses','lingerie','pants','skirts','cellphones','cameras','food','bath','medicine','vitamins','tools','supplies','furniture','gardening','kitchen','pets','rugs','linens','adult','orthotics','prosthetics','office','football','snowboarding','swimming','household']
+    name_prefix = ['LUCKY ','DAVE PRESENTS ','DISCOUNT ','QUALITY ','LUXURY ','FANTASTIC ']
+    random_category = random.randint(0,42)
+    business_name = f'{name_prefix[random.randint(0,5)]}{business_category[random_category]}'
     data = [
         {
             "datetimes": str(datatimestamp),
+            "prodCatID": prodCatID,
+            "custID": custID,
+            "status": status,
+            "business_name": business_name,
             "prodcuststat_embed": np.array([prodCatID, custID, status], dtype=np.float32).tobytes(),
         },
     ]
@@ -73,6 +80,8 @@ def do_search_query(index,status):
     print(f'\nQuery Results have a length of {len(results)}')
     return results
 
+
+# python3 prodcuststatusvss.py -h redis-12000.homelab.local -p 12000 -c y -l y -t y
 if __name__ == "__main__":
     # TODO: edit or supply as args the host and port to match your redis database endpoint:
     host="localhost"

@@ -33,7 +33,7 @@ def initialize_redis_index(host,port,search_schema):
     # initialize the connection to Redis
     connection_string = "redis://"+host+":"+port
     index = SearchIndex.from_dict(search_schema)
-    index.connect(connection_string)
+    index.connect(connection_string) 
     return index
 
 def initialize_redis_index_with_password(host,port,search_schema,password):

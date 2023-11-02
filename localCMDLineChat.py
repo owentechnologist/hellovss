@@ -5,6 +5,8 @@ You can download ggml-model-gpt4all-falcon-q4_0.bin using the following command:
 
 wget --no-check-certificate https://huggingface.co/nomic-ai/gpt4all-falcon-ggml/resolve/main/ggml-model-gpt4all-falcon-q4_0.bin
 
+wget --no-check-certificate https://huggingface.co/TheBloke/Llama-2-7b-Chat-GGUF/resolve/main/llama-2-7b-chat.Q5_K_S.gguf
+
 Once you have this file downloaded 
 - be sure to edit the line that points the lib_path to the correct location of that library: 
 
@@ -137,7 +139,7 @@ def create_and_fetchLLM():
     return(GPT4All(model=lib_path,verbose=False,repeat_penalty=1.5))
 
 # a little prompt engineering is needed to get the answers in a usable format:
-template="""The prompt that follows is a question you must answer:
+template_="""The prompt that follows is a question you must answer:
     
     Question: the input you must answer {question}
 
@@ -165,6 +167,15 @@ template_llama_rename_me_to_template_if_needed="""
     Answer: Step through this with me ...
     """    
 
+template="""You are a helpful virtual technology and IT assistant. Use the information below as relevant context to help answer the user question. Don't blindly make things up. If you don't know the answer, just say that you don't know, don't try to make up an answer. Keep the answer as concise as possible.
+
+INFORMATION:
+American cellist and fan of chocolate ice cream, Jakob Giovanni Taylor is 26 years old. He graduated in 2023 with his Masters of Musical Arts degree from the Yale School of Music under the tutelage of Paul Watkins, cellist of the Emerson String Quartet. Born in New York City, Taylor began playing the cello at the age of three. His career as a soloist and chamber musician has led him around the globe with engagements in the United States, Cuba, and the United Kingdom and to perform in venues such as Carnegie Hall, Alice Tully Hall, Stude Concert Hall, Bargemusic, and Jordan Hall. Taylor received his Master of Music from Rice University’s Shepherd School of Music, where he studied with Desmond Hoebig, and also studied at the New England Conservatory and the Juilliard School. Taylor is the recipient of the Harvey R. Russell Scholarship and Irving S. Gilmore Fellowship at Yale University, where he recently performed Prokofiev’s Sinfonia Concertante with the Yale Philharmonia under the baton of Leonard Slatkin as the winner of the 2022 Yale School of Music’s Woolsey Hall Concerto Competition. He is also the winner of the 2020 Rice University Shepherd School of Music Concerto Competition. Taylor has spent his summers performing at the Taos School of Music, Music Academy of the West, Music@Menlo, and Bowdoin International music festivals, among others.
+
+QUESTION:
+{question}?
+
+ANSWER:"""
 
 user_input = "BEGIN"
 index_name = create_index_in_redis(redis_connection=redis_connection)
