@@ -11,6 +11,13 @@ SETUP:
 
 If you intend to utilize the local language models you need to install https://gpt4all.io/index.html (do this before you do anything else)
 
+To run the Battleship example, which utilizes only Vector Similarity Search, you do not need anything but a connection to Redis running Search 2.6 or higher.  
+
+You can create a free Redis Enterprise instance for this purpose by going to https://redis.com/try-free/   (Just be sure to select Redis Stack as the type of database you create)
+
+
+## Python-preparation Steps for running the samples on your dev machine:
+
 
 1. Create a virtual environment:
 
@@ -35,19 +42,22 @@ venv\Scripts\activate
 ```
 redis>=4.3.4
 redisvl>=0.0.3
+etc ...
 ```
 
-4. Run: [this step is repeated anytime you want this venv]
+4. Install the libraries: [only necesary to do this one time per environment]
 
 ```
 pip3 install -r requirements.txt
 ```
-5. Download one of the LLM libraries needed to test the generative examples:
+
+5. And for the local LLM demos --> Download one of the LLM libraries needed to test the generative examples:  (make sure you already installed gpt4all  https://gpt4all.io/index.html )
 
 ```
 wget --no-check-certificate https://huggingface.co/nomic-ai/gpt4all-falcon-ggml/resolve/main/ggml-model-gpt4all-falcon-q4_0.bin
 ```
-6. Execute the vss_battleship.py code from the project directory.
+
+6. For a non-LLM Vector Similarity Search example:  Execute the vss_battleship.py code from the project directory.
 
 The vss_battlehip.py code generates a vector that represents the position of a ship on a 10 x 10 grid.  You take shots at the ship targetting its anchor point.  The similiarity of the vector you generate from your anchor point is compared to the similarity of the available ships's vectors - if you are close enough or have an exact match - you hit!
 Note: to make it more challenging, there are 10 quadrants and the ships are scattered across them as well.  Your search will, therefore be a hybrid query - where you select the target quadrant as well as generate a vector that represents the ships occupation of that quadrant.
