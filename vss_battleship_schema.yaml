@@ -1,24 +1,25 @@
+version: '0.1.0'
+
 index:
   name: idx_battleship
   storage_type: hash
   prefix: battleship
+  key_separator: ":"
 
 fields:
-  # define text fields
-  # define tag fields
-  # define numeric fields
-  tag:
   - name: battleship_class
-  text:
+    type: text
   - name: battleship_id
-  numeric:
+    type: numeric
   - name: quadrant
+    type: numeric
   - name: anchorpoint
-  # define vector fields 
-  vector:
+    type: numeric
   - name: coordinates_embedding
-    dims: 100
-    datatype: float32
-    algorithm: flat
-    distance_metric: L2
-    initial_cap: 1000
+    type: vector
+    attrs:
+      algorithm: flat
+      dims: 100
+      distance_metric: L2
+      datatype: float32 
+      initial_cap: 1000 

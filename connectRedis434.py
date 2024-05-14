@@ -1,3 +1,4 @@
+import redis
 from langchain.vectorstores import Redis
 from langchain.embeddings import OpenAIEmbeddings
 # export REDIS_URL="rediss://<USER>:<PASSWORD>@<HOST>:<PORT>?ssl_ca_certs=<redis_ca.pem>&ssl_certfile=<redis_user.crt>&ssl_keyfile=<redis_user_private.key>&ssl_cert_reqs=required"
@@ -7,5 +8,11 @@ from langchain.embeddings import OpenAIEmbeddings
 REDIS_URL="rediss://default:Tw6ILWm45CnQ36Iuu9HeGkmLuNm96vEOz8e818yd4Mw=@redisDB.southcentralus.redisenterprise.cache.azure.net:10000"
 url_connection = Redis.from_url(REDIS_URL)
 url_connection.set("test","popquiz")
+
+redis_conn = redis.Redis()
+data = [{"anchorpoint": 22,
+            "quadrant": 2,
+            "battleship_id": 'battleship_id_aw2',}]
+redis_conn.hset(name="bob",mapping=data)
 
 

@@ -1,4 +1,4 @@
-#!/Users/owentaylor/wip/python/vss/hellovss/redisvl/bin/python3.10
+#!/Users/owentaylor/wip/python/vss/hellovss/redisvl/bin/python3.11
 # -*- coding: utf-8 -*-
 import re
 import sys
