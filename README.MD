@@ -150,7 +150,7 @@ exiting ...
 8. when you are done exploring this set of examples you can deactivate the virtual environment:
 
 ```
-deactivate
+source deactivate
 ```
 
 

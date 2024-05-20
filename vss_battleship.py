@@ -25,7 +25,7 @@ def load_schema_definition():
     #Get the schema definition loaded from the yaml file:
     with open('vss_battleship_schema.yaml', 'r') as file:
         search_schema = yaml.safe_load(file)
-    print()
+    print(search_schema)
     print(type(search_schema))
     return search_schema
 

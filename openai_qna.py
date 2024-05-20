@@ -1,15 +1,19 @@
 # to run this example you will need the following :
 """ 
-An account with OpenAI and your secret written into a file called .env
+An account with OpenAI and your secret set as an ENVIRONMENT VARIABLE
 like this:
-OPENAI_API_KEY=sk-VotVI2p987vLx51bmo1g0lT3BlbkFJbwuxxNfKxFXwjWwu3S2M
+export OPENAI_API_KEY=sk-VotVI2p987vLx51bmo1g0lT3BlbkFJbwuxxNfKxFXwjWwu3S2M
+Also please do:
+export TOKENIZERS_PARALLELISM=false
+before running the program to avoid a verbose warning
 """
 
 # execute: > 
 """ 
-python localCMDLineChat.py -h <host> -p <port> [optional -s <password>] [optional -u <username>] 
-python3 localCMDLineChat.py -h redis-12144.c309.us-east-2-1.ec2.cloud.redislabs.com -p 12144 -s WqedzS2orEF4Dh0baBeaRqo16DrYYxzIo1
-python3 localCMDLineChat.py -h redis-12000.homelab.local -p 12000
+python openaichat.py -h <host> -p <port> [optional -s <password>] [optional -u <username>] 
+python3 openaichat.py -h redis-12144.c309.us-east-2-1.ec2.cloud.redislabs.com -p 12144 -s WqedzS2orEF4Dh0baBeaRqo16DrYYxzIo1
+python3 openaichat.py -h redis-12000.homelab.local -p 12000
+python3 openaichat.py -h redis-10000.re-cluster1.ps-redislabs.org -p 10000
 """
 # This version only uses cmdline interface
 # redis imports: for caching prompts and responses and 
@@ -26,7 +30,7 @@ from langchain.prompts.prompt import PromptTemplate
 #from langchain_community.llms import GPT4All
 import openai
 # general imports
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 import re,time,sys,getopt
 
 ### General Setup / functions: ###
@@ -61,9 +65,9 @@ def display_menu():
 ### Redis Setup / functions: ###
 
 ## checks sys.args for host and port etc...
-redis_host = 'redis-10900.re-cluster2.ps-redislabs.org'
-redis_port = 10900
-redis_password = "password"
+redis_host = 'redis-10000.re-cluster2.ps-redislabs.org'
+redis_port = 10000
+redis_password = ""
 redis_user = "default"
 create_new_index = False
 
@@ -131,13 +135,13 @@ lib_path = './ggml-model-gpt4all-falcon-q4_0.bin'
 def create_and_fetchLLM():
     # create LLM object:
     #return(GPT4All(model=lib_path,verbose=False,repeat_penalty=1.5))
-    # for use with OPENAI LLM: 
-    load_dotenv()
-    #openai.api_key = 'sk-VotVI2pKDIvLx51bmo1g0lT3BlbkFJbwuxxNfKxFXwjWwu3S2M'
+    # load_dotenv() suggested for use with OPENAI LLM:  (but, it seems that it is more reliable to use simple ENV VARIABLE)
+    # export openai.api_key='sk-VotVI2pKDIvLx51bmo1g0lT3BlbkFJbwuxxNfKxFXwjWwu3S2M'
     return openai.OpenAI() #plan to use openAI remote service...
 
 def ask_openai(question):
-    response = openai.completions.create(
+    #response = openai.completions.create(
+    response = openai.Completion.create(
       model="gpt-3.5-turbo-instruct", #"text-davinci-002",<--deprecated
       prompt=question,
       max_tokens=600

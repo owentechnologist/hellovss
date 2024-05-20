@@ -1,24 +1,25 @@
+version: '0.1.0'
+
 index:
   name: user_index
   storage_type: hash
   prefix: users
+  key_separator: ":"
 
 fields:
-  # define text fields
-  text:
   - name: user
+    type: text
   - name: job
-  # define tag fields
-  tag:
+    type: text
   - name: credit_score
-  # define numeric fields
-  numeric:
+    type: tag
   - name: age
-  # define vector fields
-  vector:
+    type: numeric
   - name: user_embedding
-    dims: 3
-    datatype: float32
-    algorithm: flat
-    distance_metric: cosine
-    initial_cap: 1000
+    type: vector
+    attrs:
+      dims: 3
+      datatype: float32
+      algorithm: flat
+      distance_metric: cosine
+      initial_cap: 1000
