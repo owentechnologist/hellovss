@@ -176,8 +176,10 @@ def do_search_query(index,anchorX,anchorY,quadrant):
     print(f'query is--> \nquadrant is {quadrant}')
     print(f'anchorX == {anchorX}  anchorY == {anchorY} ')
     vector=make_ship_shape_from_anchorXY(anchorX,anchorY)
+    query_time_start = time.time()
     results = vec_search(index=index,quadrant=quadrant,query_vector_as_bytes=vector)
-    print(f'\nQuery Results have a length of {len(results)}')
+    query_time_stop = time.time()
+    print(f'\nQuery Results have a length of {len(results)} \n Query took {query_time_stop-query_time_start} seconds round trip to execute')
     return results
 
 def play_battleship(rindex):

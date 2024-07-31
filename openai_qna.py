@@ -141,7 +141,7 @@ def create_and_fetchLLM():
 
 def ask_openai(question):
     #response = openai.completions.create(
-    response = openai.Completion.create(
+    response = openai.completions.create(
       model="gpt-3.5-turbo-instruct", #"text-davinci-002",<--deprecated
       prompt=question,
       max_tokens=600
